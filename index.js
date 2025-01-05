@@ -287,12 +287,57 @@ app.get('/students/add', (req, res) => {
       });
     });
   });
+
+  app.get('/grades', (req, res) => {
+    const query = `
+      SELECT student.name AS student_name, module.name AS module_name, grade.grade
+      FROM grade
+      JOIN student ON grade.sid = student.sid
+      JOIN module ON grade.mid = module.mid
+      ORDER BY student.name ASC, grade.grade ASC;
+    `;
   
-
-app.get('/grades', (req, res) => {
-  res.send('<h1>Grades Page</h1><p>Grades information will be displayed here.</p>');
-});
-
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error('Error fetching grades:', err);
+        return res.send('Error fetching grades');
+      }
+  
+      let gradeList = `
+        <h1>Grades Page</h1>
+        <table border="1">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Module</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+  
+      // Add each row for student, module, and grade
+      results.forEach(row => {
+        gradeList += `
+          <tr>
+            <td>${row.student_name}</td>
+            <td>${row.module_name}</td>
+            <td>${row.grade}</td>
+          </tr>
+        `;
+      });
+  
+      gradeList += `
+          </tbody>
+        </table>
+        <br>
+        <a href="/">Home</a>
+      `;
+  
+      res.send(gradeList);
+    });
+  });
+  
 app.get('/lecturers', (req, res) => {
   res.send('<h1>Lecturers (MongoDB) Page</h1><p>List of lecturers fetched from MongoDB will be shown here.</p>');
 });
