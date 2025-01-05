@@ -1,9 +1,16 @@
 const express = require('express');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
+
 const app = express();
 
 const PORT = 3004;
+
+const {MongoClient} = require('mongodb');
+
+const mongoUri = 'mongodb://localhost:27017';
+const dbName = 'proj2024MongoDB';
+const client = new MongoClient(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 const db = mysql.createConnection({
     host: 'localhost',
@@ -338,8 +345,70 @@ app.get('/students/add', (req, res) => {
     });
   });
   
-app.get('/lecturers', (req, res) => {
-  res.send('<h1>Lecturers (MongoDB) Page</h1><p>List of lecturers fetched from MongoDB will be shown here.</p>');
+  app.get('/lecturers', async (req, res) => {
+    try {
+        const db = client.db(dbName);
+        const lecturers = await db.collection('lecturers')
+            .find()
+            .sort({ _id: 1 }) // Sorting by lecturer ID (_id) alphabetically
+            .toArray();
+
+        let lecturerList = lecturers.map(lecturer => {
+            return `
+                <tr>
+                    <td>${lecturer._id}</td>
+                    <td>${lecturer.name}</td>
+                    <td>${lecturer.did}</td>
+                    <td><a href="/lecturers/delete/${lecturer._id}">Delete</a></td>
+                </tr>
+            `;
+        }).join('');
+
+        res.send(`
+            <h1>Lecturers Page</h1>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Lecturer ID</th>
+                        <th>Name</th>
+                        <th>Department ID</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${lecturerList}
+                </tbody>
+            </table>
+            <br>
+            <a href="/">Home</a>
+        `);
+    } catch (err) {
+        console.error('Error fetching lecturers:', err);
+        res.send('Error fetching lecturers');
+    }
+});
+  
+  
+app.get('/lecturers/delete/:id', async (req, res) => {
+  const lecturerId = req.params.id;
+
+  try {
+      const db = client.db(dbName);
+      const result = await db.collection('lecturers').deleteOne({ _id: lecturerId });
+
+      if (result.deletedCount === 1) {
+          res.send(`
+              <h1>Lecturer Deleted</h1>
+              <p>Lecturer ID: ${lecturerId} has been deleted.</p>
+              <a href="/lecturers">Back to Lecturers Page</a>
+          `);
+      } else {
+          res.send('Lecturer not found');
+      }
+  } catch (err) {
+      console.error('Error deleting lecturer:', err);
+      res.send('Error deleting lecturer');
+  }
 });
 
 app.listen(PORT, () => {
