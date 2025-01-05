@@ -5,13 +5,16 @@ const { mysqlDb } = require('../db');
 // Student Routes
 
 router.get('/', (req, res) => {
+  //fetches studetn info
   const query = 'SELECT sid, name, age FROM student ORDER BY sid ASC';
+  //executes query on sql db
   mysqlDb.query(query, (err, results) => {
     if (err) {
       console.error('Error fetching students:', err);
       return res.send('Error fetching students');
     }
 
+    //mapping through student info
     let studentList = results.map(student => {
       return `
         <tr>
@@ -23,6 +26,7 @@ router.get('/', (req, res) => {
       `;
     }).join('');
 
+    //renders content
     res.send(`
       <h1>Students Page</h1>
       <table border="1">
@@ -45,7 +49,5 @@ router.get('/', (req, res) => {
   });
 });
 
-// Edit, Add, and Update routes for students
-// Similarly, you can break them into their own methods like above
 
 module.exports = router;

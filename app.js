@@ -18,6 +18,7 @@ app.use('/grades', gradeRoutes);
 app.use('/lecturers', lecturerRoutes);
 
 // Root route
+//get req at root
 app.get('/', (req, res) => {
   res.send(`
     <h1>G00416157</h1>

@@ -57,6 +57,7 @@ router.get('/delete/:id', async (req, res) => {
     // Check if the lecturer teaches any modules
     const modules = await moduleCollection.find({ lecturer: lecturerId }).toArray();
 
+    //prevent deletion if the lecturer teaches any module
     if (modules.length > 0) {
       return res.send(`
         <p>Cannot delete lecturer as he/she has associated modules.</p>
@@ -64,6 +65,7 @@ router.get('/delete/:id', async (req, res) => {
       `);
     }
 
+    //accessing lecturer collection 
     const lecturerCollection = db.collection('lecturers');
     const result = await lecturerCollection.deleteOne({ _id: lecturerId });
 
@@ -71,6 +73,7 @@ router.get('/delete/:id', async (req, res) => {
       return res.send('Lecturer not found');
     }
 
+    //redirect after deletion.
     res.redirect('/lecturers');
   } catch (err) {
     console.error('Error deleting lecturer:', err);

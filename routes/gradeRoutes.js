@@ -3,6 +3,8 @@ const router = express.Router();
 const { mysqlDb } = require('../db');
 
 // Grade Routes
+
+//calling get at root
 router.get('/', (req, res) => {
   const query = `
     SELECT student.name AS student_name, module.name AS module_name, grade.grade
@@ -12,6 +14,7 @@ router.get('/', (req, res) => {
     ORDER BY student.name ASC, grade.grade ASC;
   `;
 
+  //querying sql db for grades
   mysqlDb.query(query, (err, results) => {
     if (err) {
       console.error('Error fetching grades:', err);
@@ -31,6 +34,7 @@ router.get('/', (req, res) => {
         <tbody>
     `;
 
+    //displaying grade info in table
     results.forEach(row => {
       gradeList += `
         <tr>

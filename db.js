@@ -1,6 +1,7 @@
 const mysql = require('mysql2');
 const { MongoClient } = require('mongodb');
 
+//mongo credentials
 const mysqlDb = mysql.createConnection({
   host: 'localhost',
   user: 'root',
@@ -12,6 +13,7 @@ const mongoUri = 'mongodb://localhost:27017';
 const mongoDbName = 'proj2024MongoDB';
 const mongoClient = new MongoClient(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true });
 
+//connecting to sql db
 mysqlDb.connect((err) => {
   if (err) {
     console.error('Error connecting to MySQL:', err);
@@ -20,6 +22,7 @@ mysqlDb.connect((err) => {
   }
 });
 
+//connecting to mongo db
 mongoClient.connect()
   .then(() => {
     console.log('Connected to MongoDB');
