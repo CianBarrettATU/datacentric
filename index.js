@@ -58,7 +58,7 @@ app.get('/students', (req, res) => {
             </tbody>
         </table>
         <br>
-        <a href="/add-student">Add Student</a><br>
+        <a href="/students/add">Add Student</a><br>
         <a href="/">Home</a>
         `);
     });
@@ -171,6 +171,123 @@ app.post('/students/edit/:sid', (req, res) => {
       `);
     });
 });
+
+app.get('/students/add', (req, res) => {
+    res.send(`
+      <h1>Add Student</h1>
+      <form action="/students/add" method="POST">
+        <label for="sid">Student ID (4 characters):</label>
+        <input type="text" id="sid" name="sid" required minlength="4" maxlength="4"><br><br>
+  
+        <label for="name">Name (min 2 characters):</label>
+        <input type="text" id="name" name="name" required minlength="2"><br><br>
+  
+        <label for="age">Age (18 or older):</label>
+        <input type="number" id="age" name="age" required min="18"><br><br>
+  
+        <button type="submit">Add Student</button>
+      </form>
+      <br>
+      <a href="/students">Back to Students Page</a>
+    `);
+  });
+  
+  app.post('/students/add', (req, res) => {
+    const { sid, name, age } = req.body;
+  
+    // Validation checks
+    let errors = [];
+  
+    // Validate Student ID length (exactly 4 characters)
+    if (!sid || sid.length !== 4) {
+      errors.push("Student ID must be exactly 4 characters.");
+    }
+  
+    // Validate Name length (min 2 characters)
+    if (!name || name.length < 2) {
+      errors.push("Name must be at least 2 characters long.");
+    }
+  
+    // Validate Age (18 or older)
+    if (!age || age < 18) {
+      errors.push("Age must be 18 or older.");
+    }
+  
+    if (errors.length > 0) {
+      // If there are errors, re-render the form with error messages and the entered data
+      return res.send(`
+        <h1>Add Student</h1>
+        <form action="/students/add" method="POST">
+          <label for="sid">Student ID (4 characters):</label>
+          <input type="text" id="sid" name="sid" value="${sid}" required minlength="4" maxlength="4"><br><br>
+  
+          <label for="name">Name (min 2 characters):</label>
+          <input type="text" id="name" name="name" value="${name}" required minlength="2"><br><br>
+  
+          <label for="age">Age (18 or older):</label>
+          <input type="number" id="age" name="age" value="${age}" required min="18"><br><br>
+  
+          <button type="submit">Add Student</button>
+        </form>
+        <br>
+        <a href="/students">Back to Students Page</a>
+        <div style="color: red;">
+          ${errors.map(err => `<p>${err}</p>`).join('')}
+        </div>
+      `);
+    }
+  
+    // Check if the student ID already exists
+    const query = 'SELECT sid FROM student WHERE sid = ?';
+    db.query(query, [sid], (err, result) => {
+      if (err) {
+        console.error('Error checking student ID:', err);
+        return res.send('Error checking student ID');
+      }
+  
+      if (result.length > 0) {
+        // If the student ID already exists, show an error
+        return res.send(`
+          <h1>Add Student</h1>
+          <form action="/students/add" method="POST">
+            <label for="sid">Student ID (4 characters):</label>
+            <input type="text" id="sid" name="sid" value="${sid}" required minlength="4" maxlength="4"><br><br>
+  
+            <label for="name">Name (min 2 characters):</label>
+            <input type="text" id="name" name="name" value="${name}" required minlength="2"><br><br>
+  
+            <label for="age">Age (18 or older):</label>
+            <input type="number" id="age" name="age" value="${age}" required min="18"><br><br>
+  
+            <button type="submit">Add Student</button>
+          </form>
+          <br>
+          <a href="/students">Back to Students Page</a>
+          <div style="color: red;">
+            <p>Student ID already exists. Please use a different ID.</p>
+          </div>
+        `);
+      }
+  
+      // If validation passes and student ID is unique, insert the new student
+      const insertQuery = 'INSERT INTO student (sid, name, age) VALUES (?, ?, ?)';
+      db.query(insertQuery, [sid, name, age], (err, result) => {
+        if (err) {
+          console.error('Error adding student:', err);
+          return res.send('Error adding student');
+        }
+  
+        res.send(`
+          <h1>Student Added Successfully</h1>
+          <p>Student ID: ${sid}</p>
+          <p>Name: ${name}</p>
+          <p>Age: ${age}</p>
+          <a href="/students">Back to Students Page</a>
+        `);
+      });
+    });
+  });
+  
 
 app.get('/grades', (req, res) => {
   res.send('<h1>Grades Page</h1><p>Grades information will be displayed here.</p>');
