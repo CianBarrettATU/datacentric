@@ -96,11 +96,14 @@ app.get('/students/edit/:sid', (req, res) => {
       res.send(`
         <h1>Edit Student</h1>
         <form action="/students/edit/${student.sid}" method="POST">
-          <label for="name">Name:</label>
-          <input type="text" id="name" name="name" value="${student.name}" required><br><br>
+          <label for="sid">Student ID:</label>
+          <input type="text" id="sid" name="sid" value="${student.sid}" readonly><br><br>
+
+          <label for="name">Name (min 2 characters):</label>
+          <input type="text" id="name" name="name" value="${student.name}" required minlength="2"><br><br>
           
-          <label for="age">Age:</label>
-          <input type="number" id="age" name="age" value="${student.age}" required><br><br>
+          <label for="age">Age (18 or older):</label>
+          <input type="number" id="age" name="age" value="${student.age}" required min="18"><br><br>
           
           <button type="submit">Update Student</button>
         </form>
@@ -108,12 +111,45 @@ app.get('/students/edit/:sid', (req, res) => {
         <a href="/students">Back to Students Page</a>
       `);
     });
-  });
+});
   
 // POST /students/edit/:sid (Update the student)
 app.post('/students/edit/:sid', (req, res) => {
     const studentId = req.params.sid;
     const { name, age } = req.body;
+  
+    let errors = [];
+    //doing validation checks
+    if (!name || name.length < 2) {
+        errors.push("Name must be at least 2 characters long.");
+    }
+  
+    if (!age || age < 18) {
+        errors.push("Age must be 18 or older.");
+    }
+
+    if (errors.length > 0) {
+        return res.send(`
+            <h1>Edit Student</h1>
+            <form action="/students/edit/${studentId}" method="POST">
+              <label for="sid">Student ID:</label>
+              <input type="text" id="sid" name="sid" value="${studentId}" readonly><br><br>
+  
+              <label for="name">Name (min 2 characters):</label>
+              <input type="text" id="name" name="name" value="${name}" required minlength="2"><br><br>
+  
+              <label for="age">Age (18 or older):</label>
+              <input type="number" id="age" name="age" value="${age}" required min="18"><br><br>
+  
+              <button type="submit">Update Student</button>
+            </form>
+            <br>
+            <a href="/students">Back to Students Page</a>
+            <div style="color: red;">
+                ${errors.map(err => `<p>${err}</p>`).join('')}
+            </div>
+        `);
+    }
   
     const query = 'UPDATE student SET name = ?, age = ? WHERE sid = ?';
   
