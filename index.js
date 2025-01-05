@@ -393,23 +393,36 @@ app.get('/lecturers/delete/:id', async (req, res) => {
   const lecturerId = req.params.id;
 
   try {
-      const db = client.db(dbName);
-      const result = await db.collection('lecturers').deleteOne({ _id: lecturerId });
+    const db = client.db(dbName); // Ensure you're accessing the database
+    const moduleCollection = db.collection('module');  // Access the 'module' collection
 
-      if (result.deletedCount === 1) {
-          res.send(`
-              <h1>Lecturer Deleted</h1>
-              <p>Lecturer ID: ${lecturerId} has been deleted.</p>
-              <a href="/lecturers">Back to Lecturers Page</a>
-          `);
-      } else {
-          res.send('Lecturer not found');
-      }
+    // Check if the lecturer teaches any modules
+    const modules = await moduleCollection.find({ lecturer: lecturerId }).toArray();
+
+    if (modules.length > 0) {
+      // If the lecturer teaches at least one module, show an error message
+      return res.send(`
+        <p>Cannot delete lecturer as he/she has associated modules.</p>
+        <a href="/lecturers">Back to Lecturers List</a>
+      `);
+    }
+
+    // If no modules are found, proceed to delete the lecturer
+    const lecturerCollection = db.collection('lecturers');
+    const result = await lecturerCollection.deleteOne({ _id: lecturerId });
+
+    if (result.deletedCount === 0) {
+      return res.send('Lecturer not found');
+    }
+
+    // After successful deletion, redirect to lecturers page
+    res.redirect('/lecturers');
   } catch (err) {
-      console.error('Error deleting lecturer:', err);
-      res.send('Error deleting lecturer');
+    console.error('Error deleting lecturer:', err);
+    res.send('Error deleting lecturer');
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
